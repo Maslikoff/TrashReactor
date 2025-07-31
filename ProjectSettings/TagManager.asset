@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Trash
   - Dust
+  - Reactor
+  - Ground
   layers:
   - Default
   - TransparentFX

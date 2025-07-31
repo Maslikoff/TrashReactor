@@ -9,20 +9,22 @@ public class ItemInteractionSystem : MonoBehaviour
     [SerializeField] private float _throwForce = 10f;
     [SerializeField] private TextMeshPro _pickupPromptPrefab;
     [SerializeField] private float _promtHeight = 2f; 
+    [SerializeField] private TextMeshProUGUI _textThrowItem;
+    [SerializeField] private int _maxCapacity = 1;
     
 
     private InteractableItem _currentCandidate;
     private TextMeshPro _pickupPrompt;
-    private int _maxCapacity = 1;
 
     private void Awake()
     {
         InitializePrompt();
+        UpdateThrowTextVisibility();
     }
 
-    public void UpgradeCapacity(int additionalSlots)
+    public void UpgradeCapacity()
     {
-        _maxCapacity += additionalSlots;
+        _maxCapacity++;
     }
 
     private void InitializePrompt()
@@ -36,10 +38,19 @@ public class ItemInteractionSystem : MonoBehaviour
         FindClosestInteractable();
         HandleInteractionInput();
 
+        if (_currentCandidate != null && !_currentCandidate.gameObject.activeInHierarchy)
+            ClearCurrentCandidate();
+        
+
         if (_pickupPrompt.gameObject.activeSelf && _currentCandidate != null)
-        {
             UpdatePromptPosition();
-        }
+
+        UpdateThrowTextVisibility();
+    }
+
+    private void UpdateThrowTextVisibility()
+    {
+        _textThrowItem.gameObject.SetActive(_itemHoldPoint.childCount > 0);
     }
 
     private void HandleInteractionInput()
@@ -65,6 +76,8 @@ public class ItemInteractionSystem : MonoBehaviour
         if (_itemHoldPoint.childCount == 0) return;
 
         var item = _itemHoldPoint.GetChild(0).GetComponent<InteractableItem>();
+        string itemType = item.GetItemType();
+
         item.OnThrown(transform.forward, _throwForce);
     }
 
@@ -76,10 +89,15 @@ public class ItemInteractionSystem : MonoBehaviour
 
         foreach (var collider in hitColliders)
         {
+            if (!collider.gameObject.activeInHierarchy) 
+                continue;
+
             var item = collider.GetComponent<InteractableItem>();
+
             if (item != null && _itemHoldPoint.childCount < _maxCapacity)
             {
                 float distance = Vector3.Distance(transform.position, collider.transform.position);
+
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -93,14 +111,19 @@ public class ItemInteractionSystem : MonoBehaviour
 
     private void UpdateCurrentCandidate(InteractableItem newCandidate)
     {
-        if (_currentCandidate == newCandidate) return;
+        if (_currentCandidate == newCandidate) 
+            return;
+
+        if (_currentCandidate != null)
+            _pickupPrompt.gameObject.SetActive(false);
 
         _currentCandidate = newCandidate;
         _pickupPrompt.gameObject.SetActive(_currentCandidate != null);
 
         if (_currentCandidate != null)
         {
-            _pickupPrompt.text = $"Нажмите 'E' чтобы поднять";
+            _pickupPrompt.gameObject.SetActive(true);
+            _pickupPrompt.text = $"Нажмите 'У' чтобы поднять";
             UpdatePromptPosition();
         }
     }
@@ -111,6 +134,12 @@ public class ItemInteractionSystem : MonoBehaviour
         _pickupPrompt.transform.position = promptPos;
         _pickupPrompt.transform.rotation = Quaternion.LookRotation(
             _pickupPrompt.transform.position - Camera.main.transform.position);
+    }
+
+    private void ClearCurrentCandidate()
+    {
+        _currentCandidate = null;
+        _pickupPrompt.gameObject.SetActive(false);
     }
 
     private void OnDrawGizmosSelected()

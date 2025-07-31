@@ -13,8 +13,13 @@ public class Player : MonoBehaviour
         if (_interactionSystem == null) _interactionSystem = GetComponent<ItemInteractionSystem>();
     }
 
-    public void UpgradeCarryCapacity(int additionalSlots)
+    public void UpgradePlayerSpeed()
     {
-        _interactionSystem.UpgradeCapacity(additionalSlots);
+        _movement.UpPlayerSpeed();
+    }
+
+    public void UpgradeCarryCapacity()
+    {
+        _interactionSystem.UpgradeCapacity();
     }
 }
